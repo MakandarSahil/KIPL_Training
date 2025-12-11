@@ -244,3 +244,50 @@
 //     }
 //   }
 // }
+
+//Exception handling
+using System;
+// namespace HelloWorld
+// {
+//   class Program
+//   {
+//     static void checkAge(int age)
+//     {
+//       if (age < 18)
+//       {
+//         throw new ArithmeticException("Access Denied - You must be above 18!!");
+//       }
+//       else
+//       {
+//         Console.WriteLine("Access granted - You are old enough!!");
+//       }
+//     }
+//     public static void Main(string[] args)
+//     {
+//       checkAge(15);
+//     }
+//   }
+// }
+
+// namespace HelloWorld
+// {
+//   class Program
+//   {
+//     public static void Main(string[] args)
+//     {
+//       try
+//       {
+//         int[] myNumbers = { 1, 2, 3 };
+//         Console.WriteLine(myNumbers[10]);
+//       }
+//       catch
+//       {
+//         Console.WriteLine("Out of Index!! (from catch block)");
+//       }
+//       finally
+//       {
+//         Console.WriteLine("final block executed!!");
+//       }
+//     }
+//   }
+// }
