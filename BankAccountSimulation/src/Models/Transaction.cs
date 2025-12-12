@@ -19,7 +19,7 @@ namespace BankAccountSimulation.Models
       Id = Guid.NewGuid();
       Timestamp = DateTime.UtcNow;
       Type = type;
-      amount = amount;
+      Amount = amount;
       FromAccountNumber = from;
       ToAccountNumber = to;
       Note = note;
