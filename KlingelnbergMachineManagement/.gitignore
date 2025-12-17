@@ -1,0 +1,70 @@
+
+bin/
+obj/
+out/
+
+# User-specific files
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio cache
+.vs/
+
+# Rider / ReSharper
+.idea/
+*.DotSettings.user
+
+# VS Code
+.vscode/
+
+
+# Published output
+publish/
+wwwroot/lib/
+
+# Logs
+*.log
+
+# Secrets
+secrets.json
+appsettings.Development.json
+appsettings.Local.json
+
+
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+
+
+# Packages (normally not committed)
+packages/
+
+# NuGet cache
+.nuget/
+
+
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+
+
+
+# Backup files
+*.bak
+*.tmp
+*.swp
+*.orig
+
+# Environment files
+.env
+.env.*
