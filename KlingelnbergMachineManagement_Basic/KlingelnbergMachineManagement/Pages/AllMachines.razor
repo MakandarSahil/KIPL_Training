@@ -1,0 +1,55 @@
+﻿@page "/all-machines"
+@using KlingelnbergMachineManagement.Services
+@using KlingelnbergMachineManagement.Application.Services
+@using KlingelnbergMachineManagement.Application.DTOs
+@inject IMachineService Service
+
+<PageTitle>All Machine Details</PageTitle>
+
+@if (isLoading)
+{
+    <div>
+        <h4>Loading ... </h4>
+    </div>
+} else if (machines != null && machines.Any())
+{
+    @foreach(var machine in machines)
+    {
+        <h5>@machine.MachineType</h5>
+        @foreach(var asset in machine.Assets)
+        {
+            <h6>
+                @asset.AssetName
+            </h6>
+            @* <h6>
+                @asset.IsLatestSeries
+            </h6> *@
+        }
+    }
+} else if (!isLoading)
+{
+    <div>
+        <h5>No machine data available</h5>
+    </div>
+}
+
+@code {
+    private IEnumerable<MachineDetailDto>? machines;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            machines = await Service.GetAllMachineDetailsAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading machine details: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
