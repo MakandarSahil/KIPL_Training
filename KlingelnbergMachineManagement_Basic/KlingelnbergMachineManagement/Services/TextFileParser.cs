@@ -46,6 +46,7 @@ namespace KlingelnbergMachineManagement.Services
             return mappings;
         }
 
+        // C300,Cutter Head,S6
         public MachineAssetMapping ParseLine(string line)
         {
             var parts = line.Split(',', StringSplitOptions.TrimEntries);

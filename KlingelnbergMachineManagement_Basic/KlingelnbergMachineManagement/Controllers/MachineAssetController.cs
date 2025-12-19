@@ -12,6 +12,18 @@ namespace KlingelnbergMachineManagement.Controllers
         private readonly IMachineService _service;
         private readonly ILogger<MachineAssetController> _logger;
 
+        // contructor injection - injecting instance of other using constructor
+        // we dont create instance here we use depedency injection that is we add or register services in program.cs 
+        // -- which create instance that can be used
+
+        // why we use dependecy injection -> 
+        /* 
+            -if we create object instance to use Imachine Services that is its implementation whihc is currently MachineService
+            then it will tighly couples this controller with that implementation
+            -if we want to change the implementation then it will also effect here that is we need to change each controller which
+             uses it like this
+            - helps in unit test?? how ??? todo
+        */
         public MachineAssetController(IMachineService service, ILogger<MachineAssetController> logger)
         {
             _service = service;

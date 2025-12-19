@@ -9,12 +9,42 @@ namespace KlingelnbergMachineManagement.Infrastructure.Repositories
         private readonly IEnumerable<IDataParser> _parsers;
         private readonly string _dataFilePath;
         private IEnumerable<MachineAssetMapping>? _cachedMappings;
+        private FileSystemWatcher? _fileWatcher;
 
         public AssetRepository(IEnumerable<IDataParser> parsers, string dataFilePath)
         {
             _parsers = parsers ?? throw new ArgumentNullException(nameof(parsers));
             _dataFilePath = dataFilePath ?? throw new ArgumentNullException(nameof(dataFilePath));
+
+            SetupFileWatcher();
         }
+
+        private void SetupFileWatcher()
+        {
+            var directory = Path.GetDirectoryName(_dataFilePath);
+            var fileName = Path.GetFileName(_dataFilePath);
+
+            if (directory == null || fileName == null)
+                return;
+
+            _fileWatcher = new FileSystemWatcher(directory, fileName)
+            {
+                NotifyFilter = NotifyFilters.LastWrite
+                             | NotifyFilters.Size
+                             | NotifyFilters.FileName
+            };
+
+            _fileWatcher.Changed += OnFileChanged;
+            _fileWatcher.Renamed += OnFileChanged;
+            _fileWatcher.EnableRaisingEvents = true;
+        }
+        private void OnFileChanged(object sender, FileSystemEventArgs e)
+        {
+            // Invalidate cache
+            _cachedMappings = null;
+        }
+
+
 
         /* 
         1 - checks if file data is already readed or not 
@@ -37,18 +67,27 @@ namespace KlingelnbergMachineManagement.Infrastructure.Repositories
         public async Task<IEnumerable<string>> GetAllMachineTypesAsync()
         {
             var mappings = await GetAllMappingAsync();
+            //return mappings
+            //    .Select(m => m.MachineType)
+            //    .Distinct(StringComparer.OrdinalIgnoreCase)
+            //    .OrderBy(a => a);
+
             return mappings
-                .Select(m => m.MachineType)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .GroupBy(m => m.MachineType, StringComparer.OrdinalIgnoreCase)
+                .Select(g => g.Key)
                 .OrderBy(a => a);
         }
 
         public async Task<IEnumerable<string>> GetAllAssetNamesAsync()
         {
             var mappings = await GetAllMappingAsync();
+            //return mappings
+            //    .Select(m => m.AssetName)
+            //    .Distinct(StringComparer.OrdinalIgnoreCase)
+            //    .OrderBy(a => a);
             return mappings
-                .Select(m => m.AssetName)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .GroupBy(m => m.AssetName, StringComparer.OrdinalIgnoreCase)
+                .Select(g => g.Key)
                 .OrderBy(a => a);
         }
 
