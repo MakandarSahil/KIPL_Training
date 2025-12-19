@@ -7,12 +7,3 @@ C60, Cutter head, S8
 C60, Clamping fixture, S2
 C40, Blade safety cover, S11
 C40, Shutter gripper, S3
-C100, Cutter head, S6
-C140, Cutter head, S7
-C200, Blade safety cover, S10
-C160, Blade safety cover, S11
-C800, Deburring blades, S6
-C600, Cutter head, S8
-C20, Clamping fixture, S2
-C140, Blade safety cover, S11
-C240, Shutter gripper, S3

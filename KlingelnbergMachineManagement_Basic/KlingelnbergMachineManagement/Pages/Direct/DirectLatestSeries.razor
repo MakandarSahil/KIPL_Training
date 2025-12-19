@@ -1,5 +1,110 @@
 ﻿@page "/direct/latest-series"
+@using KlingelnbergMachineManagement.Application.Services
+@inject IMachineService Service
 
-<PageTitle>Direct Machine using Latest Series</PageTitle>
+<PageTitle>Latest Series Machines (Direct)</PageTitle>
 
-<h3>this is page to display machine which uses all assets of latest series</h3>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>⭐ Machines Using Latest Series</h2>
+        <span class="badge bg-primary">Direct Access</span>
+    </div>
+
+    <p class="text-muted">
+        These machines are using the latest series of ALL their assets.
+        Data retrieved directly from service layer.
+    </p>
+
+    @if (isLoading)
+    {
+        <div class="text-center mt-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Analyzing machine configurations...</p>
+        </div>
+    }
+    else if (machines != null && machines.Any())
+    {
+        <div class="card mt-4 border-success">
+            <div class="card-header bg-success text-white">
+                <h5>
+                    <i class="bi bi-check-circle-fill"></i>
+                    @* Machines with Latest Series (@machines.Count) *@
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    @foreach (var machine in machines)
+                    {
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-success h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-cpu-fill text-success" style="font-size: 3rem;"></i>
+                                    <h5 class="card-title mt-2">@machine</h5>
+                                    <span class="badge bg-success">Fully Updated</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                @if (loadTime.HasValue)
+                {
+                    <div class="mt-3">
+                        <span class="badge bg-secondary">Load Time: @loadTime.Value ms</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="alert alert-info mt-4" role="alert">
+            <i class="bi bi-info-circle-fill"></i>
+            <strong>Note:</strong> These machines use the highest series number for each of their assets,
+            ensuring optimal performance with the latest components.
+        </div>
+    }
+    else if (!isLoading)
+    {
+        <div class="alert alert-warning mt-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            No machines are currently using the latest series of all their assets.
+        </div>
+    }
+
+    <div class="mt-4">
+        <a href="/" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Home
+        </a>
+        <a href="/api/latest-series" class="btn btn-outline-success ms-2">
+            <i class="bi bi-arrow-right"></i> Try API Version
+        </a>
+        <a href="/all-machines" class="btn btn-info ms-2">
+            <i class="bi bi-table"></i> View Details
+        </a>
+    </div>
+</div>
+
+@code {
+    private IEnumerable<string>? machines;
+    private bool isLoading = true;
+    private long? loadTime;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            machines = await Service.GetMachinesWithLatestServicesAsync();
+            sw.Stop();
+            loadTime = sw.ElapsedMilliseconds;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading machines: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
