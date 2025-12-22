@@ -17,8 +17,7 @@
         <div class="alert alert-success alert-dismissible fade show">
             <i class="bi bi-check-circle-fill me-2"></i>
             @successMessage
-            <button class="btn-close"
-                    @onclick="() => successMessage = null"></button>
+            <button class="btn-close" @onclick="() => successMessage = null"></button>
         </div>
     }
 
@@ -28,8 +27,7 @@
         <div class="alert alert-danger alert-dismissible fade show">
             <i class="bi bi-x-circle-fill me-2"></i>
             @errorMessage
-            <button class="btn-close"
-                    @onclick="() => errorMessage = null"></button>
+            <button class="btn-close" @onclick="() => errorMessage = null"></button>
         </div>
     }
 
@@ -187,7 +185,6 @@
 
 @code {
 
-    // UI state (never nullable)
     private List<MachineDetailDto> machines = new();
 
     private bool isLoading = true;
@@ -214,9 +211,7 @@
             var baseUrl = Navigation.BaseUri;
 
             machines =
-                await Http.GetFromJsonAsync<List<MachineDetailDto>>(
-                    $"{baseUrl}api/machines/details")
-                ?? new();
+                await Http.GetFromJsonAsync<List<MachineDetailDto>>($"{baseUrl}api/machines/details") ?? new();
         }
         catch (Exception ex)
         {

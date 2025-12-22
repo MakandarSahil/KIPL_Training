@@ -115,7 +115,6 @@
 </div>
 
 @code {
-    // UI collections should NEVER be null
     private List<string> allMachines = new();
     private List<string> assets = new();
 
@@ -161,7 +160,7 @@
 
             apiEndpoint =$"GET {baseUrl}api/assets/by-machine?machineType={encodedMachine}";
 
-            assets =await Http.GetFromJsonAsync<List<string>>($"{baseUrl}api/assets/by-machine?machineType={encodedMachine}") ?? new();
+            assets = await Http.GetFromJsonAsync<List<string>>($"{baseUrl}api/assets/by-machine?machineType={encodedMachine}") ?? new();
 
         }
         catch (HttpRequestException ex)
