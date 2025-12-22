@@ -23,7 +23,7 @@ namespace KlingelnbergMachineManagement.Services
         public async Task<IEnumerable<MachineAssetMapping>> ParseAsync(string filePath)
         {
             if (!File.Exists(filePath))
-                throw new FileNotFoundException($"File not found {filePath}");
+                throw new FileNotFoundException($"File not foundddddddd {filePath}");
 
             var mappings = new List<MachineAssetMapping>();
             var lines = await File.ReadAllLinesAsync(filePath);
