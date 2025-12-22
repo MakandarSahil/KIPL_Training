@@ -25,7 +25,7 @@ builder.Services.AddServerSideBlazor();
 
 // this is shared among all (infra part) , its stateless 
 builder.Services.AddSingleton<IDataParser, TextFileParser>(); 
-//builder.Services.AddSingleton<IDataParser, JsonFileParser>();
+builder.Services.AddSingleton<IDataParser, JsonFileParser>();
 
 // Register repository with data file path from configuration
 var dataFilePath = builder.Configuration.GetValue<string>("DataFilePath")
@@ -45,6 +45,15 @@ builder.Services.AddSingleton<IAssetRepository>(sp =>
 // Register application service
 // one scope per user connection
 builder.Services.AddScoped<IMachineService, MachineService>();
+builder.Services.AddScoped<IMachineDataImportService>(sp =>
+{
+    var parsers = sp.GetServices<IDataParser>();
+    var logger = sp.GetRequiredService<ILogger<MachineDataImportService>>();
+
+    return new MachineDataImportService(parsers, dataFilePath);
+});
+
+
 
 // Api endpoint support 
 builder.Services.AddControllers();
