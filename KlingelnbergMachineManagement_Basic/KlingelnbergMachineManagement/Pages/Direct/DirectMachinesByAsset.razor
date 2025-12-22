@@ -12,7 +12,29 @@
         <span class="badge bg-primary">Direct Access</span>
     </div>
 
-    
+    <p class="text-muted">Select an asset to view all machines that use it. Data retrieved directly from service layer.</p>
+
+    <div class="card mt-3">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label"><strong>Select Asset Name:</strong></label>
+                    <select class="form-select" @bind="selectedAsset">
+                        <option value="">-- Select an Asset --</option>
+                        @foreach (var asset in allAssets)
+                        {
+                            <option value="@asset">@asset</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                    <button class="btn btn-primary" @onclick="SearchMachines" disabled="@string.IsNullOrEmpty(selectedAsset)">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     @if (isLoading)
     {
@@ -21,40 +43,6 @@
                 <span class="visually-hidden">Loading...</span>
             </div>
             <p class="mt-2">Loading machines...</p>
-        </div>
-    }
-    else if(allAssets != null && allAssets.Any())
-    {
-        <p class="text-muted">Select an asset to view all machines that use it. Data retrieved directly from service layer.</p>
-
-        <div class="card mt-3">
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <label class="form-label"><strong>Select Asset Name:</strong></label>
-                        <select class="form-select" @bind="selectedAsset">
-                            <option value="">-- Select an Asset --</option>
-                            @foreach (var asset in allAssets)
-                            {
-                                <option value="@asset">@asset</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="col-md-6 d-flex align-items-end">
-                        <button class="btn btn-primary" @onclick="SearchMachines" disabled="@string.IsNullOrEmpty(selectedAsset)">
-                            <i class="bi bi-search"></i> Search
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
-    else if (!string.IsNullOrEmpty(err))
-    {
-        <div class="text-center py-5">
-            <i class="bi bi-cpu display-1 text-muted"></i>
-            <h5 class="mt-3">Error Occured !!</h5>
-            <p class="mb-4 text-danger">@err.</p>
         </div>
     }
     else if (machines != null && machines.Any())
@@ -99,7 +87,6 @@
     private IEnumerable<string>? machines;
     private bool isLoading = false;
     private bool searchPerformed = false;
-    private string err = String.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -110,7 +97,6 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading assets: {ex.Message}");
-            err = ex.Message;
         }
     }
 
@@ -121,6 +107,7 @@
 
         isLoading = true;
         searchPerformed = true;
+        var sw = System.Diagnostics.Stopwatch.StartNew();
 
         try
         {
@@ -130,7 +117,6 @@
         {
             Console.WriteLine($"Error searching machines: {ex.Message}");
             machines = new List<string>();
-            err = ex.Message;
         }
         finally
         {
