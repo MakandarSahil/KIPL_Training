@@ -12,30 +12,6 @@
         <span class="badge bg-primary">Direct Access</span>
     </div>
 
-    <p class="text-muted">Select a machine type to view all assets it uses. Data retrieved directly from service layer.</p>
-
-    <div class="card mt-3">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <label class="form-label"><strong>Select Machine Type:</strong></label>
-                    <select class="form-select" @bind="selectedMachine">
-                        <option value="">-- Select a Machine --</option>
-                        @foreach (var machine in allMachines)
-                        {
-                            <option value="@machine">@machine</option>
-                        }
-                    </select>
-                </div>
-                <div class="col-md-6 d-flex align-items-end">
-                    <button class="btn btn-primary" @onclick="SearchAssets" disabled="@string.IsNullOrEmpty(selectedMachine)">
-                        <i class="bi bi-search"></i> Search
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     @if (isLoading)
     {
         <div class="text-center mt-4">
@@ -43,6 +19,32 @@
                 <span class="visually-hidden">Loading...</span>
             </div>
             <p class="mt-2">Loading assets...</p>
+        </div>
+    }
+    else if (allMachines != null && allMachines.Any())
+    {
+        <p class="text-muted">Select a machine type to view all assets it uses. Data retrieved directly from service layer.</p>
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label"><strong>Select Machine Type:</strong></label>
+                        <select class="form-select" @bind="selectedMachine">
+                            <option value="">-- Select a Machine --</option>
+                            @foreach (var machine in allMachines)
+                            {
+                                <option value="@machine">@machine</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <button class="btn btn-primary" @onclick="SearchAssets" disabled="@string.IsNullOrEmpty(selectedMachine)">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     }
     else if (assets != null && assets.Any())
@@ -61,6 +63,14 @@
                     }
                 </ul>
             </div>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(err))
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-cpu display-1 text-muted"></i>
+            <h5 class="mt-3">Error Occured !!</h5>
+            <p class="mb-4 text-danger">@err.</p>
         </div>
     }
     else if (searchPerformed && (assets == null || !assets.Any()))
@@ -87,6 +97,7 @@
     private IEnumerable<string>? assets;
     private bool isLoading = false;
     private bool searchPerformed = false;
+    private string err = String.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -97,6 +108,7 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading machines: {ex.Message}");
+            err = ex.Message;
         }
     }
 
@@ -116,6 +128,7 @@
         {
             Console.WriteLine($"Error searching assets: {ex.Message}");
             assets = new List<string>();
+            err = ex.Message;
         }
         finally
         {

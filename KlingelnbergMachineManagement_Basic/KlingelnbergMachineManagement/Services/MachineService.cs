@@ -9,10 +9,12 @@ namespace KlingelnbergMachineManagement.Application.Services
     {
         // service implementing business logic for machine asset operations
         private readonly IAssetRepository _repository;
+        //private readonly ILogger<MachineService> _logger;
 
         public MachineService(IAssetRepository repository)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            //_logger = logger;
         }
 
         // Get assets for a specific machine 
@@ -49,6 +51,7 @@ namespace KlingelnbergMachineManagement.Application.Services
         // Get Machines using latest series of all their assets 
         public async Task<IEnumerable<string>> GetMachinesWithLatestServicesAsync()
         {
+            //_logger.LogInformation("Getting latest series from the machine");
             var mappings = await _repository.GetAllMappingAsync();
 
             // Step 1: Find the latest series for each asset
