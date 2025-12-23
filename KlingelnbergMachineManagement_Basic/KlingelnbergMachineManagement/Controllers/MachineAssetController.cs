@@ -10,18 +10,7 @@ namespace KlingelnbergMachineManagement.Controllers
         private readonly IMachineService _service;
         private readonly ILogger<MachineAssetController> _logger;
 
-        // contructor injection - injecting instance of other using constructor
-        // we dont create instance here we use depedency injection that is we add or register services in program.cs 
-        // -- which create instance that can be used
-
-        // why we use dependecy injection -> 
-        /* 
-            -if we create object instance to use Imachine Services that is its implementation whihc is currently MachineService
-            then it will tighly couples this controller with that implementation
-            -if we want to change the implementation then it will also effect here that is we need to change each controller which
-             uses it like this
-            - helps in unit test?? how ??? todo
-        */
+        
         public MachineAssetController(
             IMachineService service,
             ILogger<MachineAssetController> logger)
@@ -30,11 +19,6 @@ namespace KlingelnbergMachineManagement.Controllers
             _logger = logger;
         }
 
-        // ----------------------------------------------------
-        // MACHINES
-        // ----------------------------------------------------
-
-        // GET /api/machines
         [HttpGet("machines")]
         [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAllMachineTypes()
@@ -50,7 +34,6 @@ namespace KlingelnbergMachineManagement.Controllers
             }
         }
 
-        // GET /api/machines/latest-series
         [HttpGet("machines/latest-series")]
         [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetMachinesWithLatestSeries()
@@ -66,7 +49,6 @@ namespace KlingelnbergMachineManagement.Controllers
             }
         }
 
-        // GET /api/machines/details
         [HttpGet("machines/details")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAllMachineDetails()
@@ -82,11 +64,6 @@ namespace KlingelnbergMachineManagement.Controllers
             }
         }
 
-        // ----------------------------------------------------
-        // FILTERED QUERIES (SEPARATE ROUTES)
-        // ----------------------------------------------------
-
-        // GET /api/machines/by-asset?assetName=Blade%20safety%20cover
         [HttpGet("machines/by-asset")]
         [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -112,7 +89,6 @@ namespace KlingelnbergMachineManagement.Controllers
             }
         }
 
-        // GET /api/assets/by-machine?machineType=C300
         [HttpGet("assets/by-machine")]
         [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -138,11 +114,6 @@ namespace KlingelnbergMachineManagement.Controllers
             }
         }
 
-        // ----------------------------------------------------
-        // ASSETS
-        // ----------------------------------------------------
-
-        // GET /api/assets
         [HttpGet("assets")]
         [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAllAssets()

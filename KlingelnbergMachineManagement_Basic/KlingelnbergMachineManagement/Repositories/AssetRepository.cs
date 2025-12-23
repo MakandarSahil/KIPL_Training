@@ -46,11 +46,6 @@ namespace KlingelnbergMachineManagement.Infrastructure.Repositories
 
 
 
-        /* 
-        1 - checks if file data is already readed or not 
-        2 - if not then checks which parser cam handle that data 
-        3 - read data from the file 
-        */
         public async Task<IEnumerable<MachineAssetMapping>> GetAllMappingAsync()
         {
             if(_cachedMappings != null)

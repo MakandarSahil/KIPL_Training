@@ -8,7 +8,7 @@ namespace KlingelnbergMachineManagement.Services
     {
         private static readonly Regex SeriesPattern = new Regex(@"^S\d+$", RegexOptions.Compiled);
 
-        // checks the file format if it is valid or not for this class 
+
         public bool CanParse(string filePath)
         {
             if (string.IsNullOrEmpty(filePath))
@@ -19,11 +19,10 @@ namespace KlingelnbergMachineManagement.Services
         }
 
 
-        // reads data from file and extracts the required values and calls the constructor
         public async Task<IEnumerable<MachineAssetMapping>> ParseAsync(string filePath)
         {
             if (!File.Exists(filePath))
-                throw new FileNotFoundException($"File not foundddddddd {filePath}");
+                throw new FileNotFoundException($"File not foundddd {filePath}");
 
             var mappings = new List<MachineAssetMapping>();
             var lines = await File.ReadAllLinesAsync(filePath);
@@ -46,7 +45,6 @@ namespace KlingelnbergMachineManagement.Services
             return mappings;
         }
 
-        // C300,Cutter Head,S6
         public MachineAssetMapping ParseLine(string line)
         {
             var parts = line.Split(',', StringSplitOptions.TrimEntries);

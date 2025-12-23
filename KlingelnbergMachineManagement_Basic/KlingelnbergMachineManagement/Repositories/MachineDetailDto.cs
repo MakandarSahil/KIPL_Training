@@ -1,7 +1,5 @@
 ﻿namespace KlingelnbergMachineManagement.Application.DTOs
 {
-    // data transfer object for machine details 
-    // used to transfer data between layers without exposing domain models
 
     public class MachineDetailDto
     {

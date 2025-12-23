@@ -1,23 +1,16 @@
 ﻿using KlingelnbergMachineManagement.Domain.Interfaces;
-using KlingelnbergMachineManagement.Domain.Models;
 using KlingelnbergMachineManagement.Application.DTOs;
-
-
 namespace KlingelnbergMachineManagement.Application.Services
 {
     public class MachineService : IMachineService
     {
-        // service implementing business logic for machine asset operations
         private readonly IAssetRepository _repository;
-        //private readonly ILogger<MachineService> _logger;
 
         public MachineService(IAssetRepository repository)
         {
-            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-            //_logger = logger;
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));         
         }
 
-        // Get assets for a specific machine 
         public async Task<IEnumerable<string>> GetAssetsByMachineTypeAsync(string machineType)
         {
             if (string.IsNullOrWhiteSpace(machineType))
@@ -28,11 +21,9 @@ namespace KlingelnbergMachineManagement.Application.Services
                 .Where(m => m.MachineType.Equals(machineType, StringComparison.OrdinalIgnoreCase))
                 .Select(m => m.AssetName)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(a => a)
                 .ToList();
         }
 
-        // Get Machine that use a specific asset 
         public async Task<IEnumerable<string>> GetMachinesByAssetNameAsync(string assetName)
         {
             if (string.IsNullOrWhiteSpace(assetName))
@@ -43,92 +34,47 @@ namespace KlingelnbergMachineManagement.Application.Services
                 .Where(m => m.AssetName.Equals(assetName, StringComparison.OrdinalIgnoreCase))
                 .Select(m => m.MachineType)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(a => a)
                 .ToList();
         }
 
-
-        // Get Machines using latest series of all their assets 
         public async Task<IEnumerable<string>> GetMachinesWithLatestServicesAsync()
         {
-            //_logger.LogInformation("Getting latest series from the machine");
             var mappings = await _repository.GetAllMappingAsync();
+            var latestSeriesByAsset = mappings
+                .GroupBy(m => m.AssetName)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Max(m => ExtractSeriesNumber(m.SeriesNumber)),
+                    StringComparer.OrdinalIgnoreCase
+                );
 
-            // Step 1: Find the latest series for each asset
+            var machinesWithLatestSeries = mappings
+                .GroupBy(machine => machine.MachineType, StringComparer.OrdinalIgnoreCase)
+                .Where(machineGroup =>
+                    machineGroup.All(mapping =>
+                        ExtractSeriesNumber(mapping.SeriesNumber) == latestSeriesByAsset[mapping.AssetName]
+                    )
+                )
+                .Select(g => g.Key)
+                .ToList();
 
-            var latestSeriesByAsset =
-                from m in mappings
-                group m by m.AssetName into assetGroup
-                select new
-                {
-                    AssetName = assetGroup.Key,
-                    LatestSeries = assetGroup.Max(x => ExtractSeriesNumber(x.SeriesNumber))
-                };
-
-
-            //var latestSeriesByAsset = mappings
-            //    .GroupBy(m => m.AssetName, StringComparer.OrdinalIgnoreCase)
-            //    .ToDictionary(
-            //        g => g.Key,
-            //        g => g.Max(m => ExtractSeriesNumber(m.SeriesNumber)),
-            //        StringComparer.OrdinalIgnoreCase
-            //    );
-
-            // Step 2: Group by machine and check if all assets use latest series
-            //var machineAssets = mappings
-            //    .GroupBy(m => m.MachineType, StringComparer.OrdinalIgnoreCase);
-
-            //var machinesWithLatestSeries = new List<string>();
-
-            //foreach (var group in machineAssets)
-            //{
-            //    var machineType = group.Key;
-            //    var allUseLatest = true;
-
-            //    foreach (var mapping in group)
-            //    {
-            //        var currentSeries = ExtractSeriesNumber(mapping.SeriesNumber);
-            //        var latestSeries = latestSeriesByAsset[mapping.AssetName];
-
-            //        if (currentSeries < latestSeries)
-            //        {
-            //            allUseLatest = false;
-            //            break;
-            //        }
-            //    }
-
-            //    if (allUseLatest)
-            //        machinesWithLatestSeries.Add(machineType);
-            //}
-
-            var machinesWithLatestSeries =
-                from m in mappings
-                join latest in latestSeriesByAsset
-                    on m.AssetName equals latest.AssetName
-                group new { m, latest } by m.MachineType into machineGroup
-                where machineGroup.All(x => ExtractSeriesNumber(x.m.SeriesNumber) == x.latest.LatestSeries)
-                select machineGroup.Key;
-
-            return machinesWithLatestSeries.OrderBy(m => m);
+            return machinesWithLatestSeries;
         }
-
-
-        // Get All Machine Types
+       
         public async Task<IEnumerable<string>> GetAllMachineTypesAsync()
         {
             return await _repository.GetAllMachineTypesAsync();
         }
 
-        // Get all Asset Names 
         public async Task<IEnumerable<string>> GetAllAssetNamesAsync()
         {
             return await _repository.GetAllAssetNamesAsync();
         }
+        
         public async Task<IEnumerable<MachineDetailDto>> GetAllMachineDetailsAsync()
         {
             var mappings = await _repository.GetAllMappingAsync();
 
-            // Get latest series info
             var latestSeriesByAsset = mappings
                 .GroupBy(m => m.AssetName, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(
@@ -136,15 +82,6 @@ namespace KlingelnbergMachineManagement.Application.Services
                     g => g.Max(m => ExtractSeriesNumber(m.SeriesNumber)),
                     StringComparer.OrdinalIgnoreCase
                 );
-
-            //var latestSeriesByAsset =
-            //    from m in mappings
-            //    group m by m.AssetName into assetGroup
-            //    select new
-            //    {
-            //        AssetName = assetGroup.Key,
-            //        LatestSeries = assetGroup.Max(a => ExtractSeriesNumber(a.AssetName))
-            //    };
 
             var machineGroups = mappings.GroupBy(m => m.MachineType, StringComparer.OrdinalIgnoreCase);
             var result = new List<MachineDetailDto>();
@@ -175,6 +112,7 @@ namespace KlingelnbergMachineManagement.Application.Services
 
             return result.OrderBy(m => m.MachineType);
         }
+
 
         private int ExtractSeriesNumber(string seriesNumber)
         {

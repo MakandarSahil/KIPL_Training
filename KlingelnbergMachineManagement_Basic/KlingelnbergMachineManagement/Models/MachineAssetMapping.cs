@@ -1,6 +1,5 @@
 ﻿namespace KlingelnbergMachineManagement.Domain.Models
 {
-    // this is to represent single entry from the data source that is raw data
     
     public class MachineAssetMapping
     {

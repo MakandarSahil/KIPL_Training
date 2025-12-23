@@ -1,8 +1,5 @@
 ﻿using KlingelnbergMachineManagement.Domain.Models;
 using KlingelnbergMachineManagement.Infrastructure.DataParsers;
-using KlingelnbergMachineManagement.Infrastructure.Options;
-using Microsoft.Extensions.Options;
-
 namespace KlingelnbergMachineManagement.Application.Services
 {
     public class MachineDataImportService : IMachineDataImportService

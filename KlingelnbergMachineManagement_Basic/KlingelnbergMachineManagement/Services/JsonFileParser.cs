@@ -3,10 +3,7 @@ using System.Text.Json;
 
 namespace KlingelnbergMachineManagement.Infrastructure.DataParsers
 {
-    /// <summary>
-    /// Parses JSON formatted machine-asset mapping files.
-    /// Follows Strategy pattern and Open–Closed Principle.
-    /// </summary>
+
     public class JsonFileParser : IDataParser
     {
         private class JsonMapping
