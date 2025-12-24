@@ -1,73 +1,57 @@
-﻿using KlingelnbergMachineManagement.Domain.Models;
+﻿using KlingelnbergMachineManagement.Application.Services;
+using KlingelnbergMachineManagement.Domain.Interfaces;
 using KlingelnbergMachineManagement.Infrastructure.DataParsers;
-namespace KlingelnbergMachineManagement.Application.Services
+
+public class MachineDataImportService : IMachineDataImportService
 {
-    public class MachineDataImportService : IMachineDataImportService
+    private readonly IEnumerable<IDataParser> _parsers;
+    private readonly IAssetWriteRepository _writeRepository;
+
+    public MachineDataImportService(
+        IEnumerable<IDataParser> parsers,
+        IAssetWriteRepository writeRepository)
     {
-        private readonly IEnumerable<IDataParser> _parsers;
-        private readonly string _dataFilePath;
+        _parsers = parsers;
+        _writeRepository = writeRepository;
+    }
 
-        public MachineDataImportService(
-            IEnumerable<IDataParser> parsers,
-            string dataFilePath)
+    public async Task ImportAsync(Stream fileStream, string fileName, ImportMode mode)
+    {
+        if (fileStream == null || fileStream.Length == 0)
+            throw new ArgumentException("File is empty");
+
+        var tempFilePath = Path.Combine(
+            Path.GetTempPath(),
+            $"{Guid.NewGuid()}_{fileName}");
+
+        await using (var fs = new FileStream(tempFilePath, FileMode.Create))
         {
-            _parsers = parsers;
-            _dataFilePath = dataFilePath;
-
-            if (string.IsNullOrWhiteSpace(_dataFilePath))
-                throw new InvalidOperationException("Data file path is not configured");
+            await fileStream.CopyToAsync(fs);
         }
 
-        public async Task ImportAsync(Stream fileStream, string fileName, ImportMode mode)
+        try
         {
-            if (fileStream == null || fileStream.Length == 0)
-                throw new ArgumentException("File is empty");
+            var parser = _parsers.FirstOrDefault(p => p.CanParse(tempFilePath))
+                ?? throw new NotSupportedException("Unsupported file format");
 
-            var tempFilePath = Path.Combine(
-                Path.GetTempPath(),
-                $"{Guid.NewGuid()}_{fileName}"
-            );
+            var mappings = (await parser.ParseAsync(tempFilePath)).ToList();
 
-            await using (var fs = new FileStream(tempFilePath, FileMode.Create))
+            if (!mappings.Any())
+                throw new InvalidDataException("No valid data found");
+
+            if (mode == ImportMode.Replace)
             {
-                await fileStream.CopyToAsync(fs);
+                await _writeRepository.ReplaceAllAsync(mappings);
             }
-
-            try
+            else
             {
-                var parser = _parsers.FirstOrDefault(p => p.CanParse(tempFilePath))
-                    ?? throw new NotSupportedException("Unsupported file format");
-
-                var newMappings = (await parser.ParseAsync(tempFilePath)).ToList();
-
-                List<MachineAssetMapping> finalMappings;
-
-                if (mode == ImportMode.Replace || !File.Exists(_dataFilePath))
-                {
-                    finalMappings = newMappings;
-                }
-                else
-                {
-                    var existingParser = _parsers.First(p => p.CanParse(_dataFilePath));
-                    var existingMappings =
-                        (await existingParser.ParseAsync(_dataFilePath)).ToList();
-
-                    finalMappings = existingMappings
-                        .Concat(newMappings)
-                        .Distinct()
-                        .ToList();
-                }
-
-                var lines = finalMappings.Select(m =>
-                    $"{m.MachineType},{m.AssetName},{m.SeriesNumber}");
-
-                await File.WriteAllLinesAsync(_dataFilePath, lines);
+                await _writeRepository.AppendAsync(mappings);
             }
-            finally
-            {
-                if (File.Exists(tempFilePath))
-                    File.Delete(tempFilePath);
-            }
+        }
+        finally
+        {
+            if (File.Exists(tempFilePath))
+                File.Delete(tempFilePath);
         }
     }
 }

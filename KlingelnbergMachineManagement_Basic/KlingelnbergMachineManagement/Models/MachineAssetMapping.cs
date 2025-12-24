@@ -1,8 +1,13 @@
-﻿namespace KlingelnbergMachineManagement.Domain.Models
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+namespace KlingelnbergMachineManagement.Domain.Models
 {
     
     public class MachineAssetMapping
     {
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string? Id { get; set; }
         public string MachineType {  get; set; }
         public string AssetName { get; set; }
         public string SeriesNumber { get; set; }
