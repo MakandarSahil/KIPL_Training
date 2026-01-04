@@ -2,93 +2,85 @@
 using KlingelnbergMachineManagement.Domain.Models;
 using KlingelnbergMachineManagement.Infrastructure.DataParsers;
 
-namespace KlingelnbergMachineManagement.Infrastructure.Repositories
+public class AssetRepository : IAssetRepository, IDisposable
 {
-    public class AssetRepository : IAssetRepository
-    {
-        private readonly IEnumerable<IDataParser> _parsers;
-        private readonly string _dataFilePath;
-        private IEnumerable<MachineAssetMapping>? _cachedMappings;
-        private FileSystemWatcher? _fileWatcher;
+  private readonly IEnumerable<IDataParser> _parsers;
+  private readonly string _dataFilePath;
+  private IEnumerable<MachineAssetMapping>? _cachedMappings;
+  private FileSystemWatcher? _fileWatcher;
+  private readonly SemaphoreSlim _cacheLock = new(1, 1);
 
-        public AssetRepository(IEnumerable<IDataParser> parsers, string dataFilePath)
-        {
-            _parsers = parsers ?? throw new ArgumentNullException(nameof(parsers));
-            _dataFilePath = dataFilePath ?? throw new ArgumentNullException(nameof(dataFilePath));
+  public AssetRepository(IEnumerable<IDataParser> parsers, string dataFilePath) {
+    _parsers = parsers ?? throw new ArgumentNullException(nameof(parsers));
+    _dataFilePath = dataFilePath ?? throw new ArgumentNullException(nameof(dataFilePath));
 
-            SetupFileWatcher();
-        }
+    SetupFileWatcher();
+  }
 
-        private void SetupFileWatcher()
-        {
-            var directory = Path.GetDirectoryName(_dataFilePath);
-            var fileName = Path.GetFileName(_dataFilePath);
+  private void SetupFileWatcher() {
+    var directory = Path.GetDirectoryName(_dataFilePath);
+    var fileName = Path.GetFileName(_dataFilePath);
 
-            if (directory == null || fileName == null)
-                return;
+    if (string.IsNullOrEmpty(directory) || string.IsNullOrEmpty(fileName))
+      return;
 
-            _fileWatcher = new FileSystemWatcher(directory, fileName)
-            {
-                NotifyFilter = NotifyFilters.LastWrite
-                             | NotifyFilters.Size
-                             | NotifyFilters.FileName
-            };
+    if (!Directory.Exists(directory))
+      Directory.CreateDirectory(directory);
 
-            _fileWatcher.Changed += OnFileChanged;
-            _fileWatcher.Renamed += OnFileChanged;
-            _fileWatcher.EnableRaisingEvents = true;
-        }
-        private void OnFileChanged(object sender, FileSystemEventArgs e)
-        {
-            // Invalidate cache
-            _cachedMappings = null;
-        }
+    _fileWatcher = new FileSystemWatcher(directory, fileName) {
+      NotifyFilter = NotifyFilters.LastWrite
+                     | NotifyFilters.Size
+                     | NotifyFilters.FileName
+    };
 
+    _fileWatcher.Changed += (_, _) => InvalidateCache();
+    _fileWatcher.Renamed += (_, _) => InvalidateCache();
+    _fileWatcher.EnableRaisingEvents = true;
+  }
 
+  private void InvalidateCache() {
+    _cachedMappings = null;
+  }
 
-        public async Task<IEnumerable<MachineAssetMapping>> GetAllMappingAsync()
-        {
-            if(_cachedMappings != null)
-                return _cachedMappings;
+  public async Task<IEnumerable<MachineAssetMapping>> GetAllMappingAsync() {
+    if (_cachedMappings != null)
+      return _cachedMappings;
 
-            var parser = _parsers.FirstOrDefault(p => p.CanParse(_dataFilePath));
-            if (parser == null)
-                throw new NotSupportedException($"No parser available for the file: {_dataFilePath}");
+    await _cacheLock.WaitAsync();
+    try {
+      if (_cachedMappings != null)
+        return _cachedMappings;
 
-            _cachedMappings = await parser.ParseAsync(_dataFilePath);
-            return _cachedMappings;
-        }
+      var parser = _parsers.FirstOrDefault(p => p.CanParse(_dataFilePath));
+      if (parser == null)
+        throw new NotSupportedException($"No parser for {_dataFilePath}");
 
-        public async Task<IEnumerable<string>> GetAllMachineTypesAsync()
-        {
-            var mappings = await GetAllMappingAsync();
-            //return mappings
-            //    .Select(m => m.MachineType)
-            //    .Distinct(StringComparer.OrdinalIgnoreCase)
-            //    .OrderBy(a => a);
-
-            return mappings
-                .GroupBy(m => m.MachineType, StringComparer.OrdinalIgnoreCase)
-                .Select(g => g.Key)
-                .OrderBy(a => a);
-        }
-
-        public async Task<IEnumerable<string>> GetAllAssetNamesAsync()
-        {
-            var mappings = await GetAllMappingAsync();
-            //return mappings
-            //    .Select(m => m.AssetName)
-            //    .Distinct(StringComparer.OrdinalIgnoreCase)
-            //    .OrderBy(a => a);
-            return mappings
-                .GroupBy(m => m.AssetName, StringComparer.OrdinalIgnoreCase)
-                .Select(g => g.Key)
-                .OrderBy(a => a);
-        }
-
-        public void ClearCache()
-        {
-            _cachedMappings = null;
-        }
+      _cachedMappings = await parser.ParseAsync(_dataFilePath);
+      return _cachedMappings;
     }
+    finally {
+      _cacheLock.Release();
+    }
+  }
+
+  public async Task<IEnumerable<string>> GetAllMachineTypesAsync() {
+    var mappings = await GetAllMappingAsync();
+    return mappings
+        .GroupBy(m => m.MachineType, StringComparer.OrdinalIgnoreCase)
+        .Select(g => g.Key)
+        .OrderBy(x => x);
+  }
+
+  public async Task<IEnumerable<string>> GetAllAssetNamesAsync() {
+    var mappings = await GetAllMappingAsync();
+    return mappings
+        .GroupBy(m => m.AssetName, StringComparer.OrdinalIgnoreCase)
+        .Select(g => g.Key)
+        .OrderBy(x => x);
+  }
+
+  public void Dispose() {
+    _fileWatcher?.Dispose();
+    _cacheLock.Dispose();
+  }
 }

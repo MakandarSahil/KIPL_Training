@@ -20,12 +20,29 @@ builder.Services.AddSingleton<IDataParser, JsonFileParser>();
 var dataFilePath = builder.Configuration.GetValue<string>("DataFilePath")
     ?? Path.Combine(builder.Environment.ContentRootPath, "Data", "matrix.txt");
 
-builder.Services.Configure<MongoDbSettings>(
-    builder.Configuration.GetSection("MongoDbSettings"));
-builder.Services.AddSingleton<MongoDbContext>();
+var storageMode = builder.Configuration.GetValue<string>("StorageMode") ?? "MONGO_DB";
 
-builder.Services.AddScoped<IAssetRepository, MongoAssetRespository>();
-builder.Services.AddScoped<IAssetWriteRepository, MongoAssetRespository>();
+if (storageMode == "MONGO_DB") {
+  // Mongo configuration
+  builder.Services.Configure<MongoDbSettings>(
+      builder.Configuration.GetSection("MongoDbSettings"));
+
+  builder.Services.AddSingleton<MongoDbContext>();
+
+  builder.Services.AddScoped<IAssetRepository, MongoAssetRespository>();
+  builder.Services.AddScoped<IAssetWriteRepository, MongoAssetRespository>();
+}
+else // FILE MODE
+{
+  builder.Services.AddSingleton<IAssetRepository>(sp =>
+  {
+    var parsers = sp.GetServices<IDataParser>();
+    return new AssetRepository(parsers, dataFilePath);
+  });
+
+  builder.Services.AddSingleton<IAssetWriteRepository>(
+      _ => new FileAssetWriteRepository(dataFilePath));
+}
 
 builder.Services.AddScoped<IMachineService, MachineService>();
 builder.Services.AddScoped<IMachineDataImportService, MachineDataImportService>();
