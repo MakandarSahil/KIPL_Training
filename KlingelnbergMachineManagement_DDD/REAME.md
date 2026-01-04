@@ -1,0 +1,1 @@
+This is to study and understand how DDD work what are best standard practices followed in production and industry level
